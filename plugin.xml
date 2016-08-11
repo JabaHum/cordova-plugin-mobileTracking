@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    id="com.matd.mobileTracking"
-    version="0.2.11">
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="com.matd.mobileTracking" version="0.2.11">
     <name>MobileTracking</name>
     <description>Cordova Plugin for tracking device position</description>
     <license>Apache 2.0</license>
@@ -11,17 +8,22 @@
     <issue></issue>
 
     <js-module src="www/MobileTracking.js" name="MobileTracking">
-        <clobbers target="MobileTracking" />
+        <clobbers target="MobileTracking"/>
     </js-module>
 
     <!-- android -->
     <platform name="android">
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+            <uses-permission android:name="android.permission.INTERNET" />
+        </config-file>
         <config-file target="res/xml/config.xml" parent="/*">
-            <feature name="MobileTracking" >
+            <feature name="MobileTracking">
                 <param name="android-package" value="MobileTracking"/>
             </feature>
         </config-file>
-        <source-file src="src/android/MobileTracking.java" target-dir="src/" />
+        <source-file src="src/android/MobileTracking.java" target-dir="src/"/>
     </platform>
 
 </plugin>
