@@ -1,10 +1,12 @@
 
+import android.app.Activity;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
 import android.os.Looper;
+import android.content.Intent;
 import javax.security.auth.callback.Callback;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
@@ -21,14 +23,19 @@ import android.location.Criteria;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaWebView;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
+
 
 public class MobileTracking extends CordovaPlugin {
 
     public static final String TAG = "debug";
     public static final String GPS = Manifest.permission.ACCESS_FINE_LOCATION;
     public static final String NETWORK = Manifest.permission.ACCESS_COARSE_LOCATION;
+
     public static final int GPS_REQ_CODE = 0;
     public static final int NETWORK_REQ_CODE = 1;
+    public static final int CELL_REQ_CODE = 2;
+
     public static final int MOBILETRACKING_GPS = 1;
     public static final int MOBILETRACKING_NETWORK = 2;
     public static final int MOBILETRACKING_CELL = 3;
@@ -49,11 +56,14 @@ public class MobileTracking extends CordovaPlugin {
     private static LocationManager locationManager;
     private static CordovaInterface cordova;
     private static CallbackContext callbackContext;
+    private static Context context ;
     public Location bestGpsLocation;
     public Location bestNetworkLocation;
     public int counter=0;
     private double minDistance = 0;
     private long minTime = 0;
+
+
 
     /**
      * Constructor.
@@ -64,6 +74,9 @@ public class MobileTracking extends CordovaPlugin {
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         this.cordova = cordova;
+        context = this.cordova.getActivity().getApplicationContext();
+
+
     }
 
     @Override
@@ -97,6 +110,35 @@ public class MobileTracking extends CordovaPlugin {
             pluginResult.setKeepCallback(true);
             this.callbackContext.sendPluginResult(pluginResult);
             return true;
+        }else if (action.equals("watchPosition")){
+          Log.d(TAG, "We are entering watchPosition");
+          // create a package object for java.lang package
+             Package pack = Package.getPackage("java.lang");
+
+             // get the fully qualified name for this package
+            Log.d(TAG, "packageName:"+pack.getName());
+
+          int c = Background.ay7aja(2,3);
+          Log.d(TAG,""+c);
+          Activity activity = cordova.getActivity();
+          Intent intent = new Intent(
+                  activity, Background.class);
+
+          try {
+            //  activity.bindService(intent,
+              //        connection, Context.BIND_AUTO_CREATE);
+              //intent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+              activity.startService(intent);
+          } catch (Exception e) {
+            Log.i(TAG,"error starting service");
+
+          }
+
+
+
+
+
+          cordova.getActivity().startService(intent);
         }
         return false;  // Returning false results in a "MethodNotFound" error.
     }
@@ -126,6 +168,8 @@ public class MobileTracking extends CordovaPlugin {
                 getSinglePositionGPS(minTime,minDistance);break;
             case NETWORK_REQ_CODE:
                 getSinglePositionNETWORK(minTime,minDistance);break;
+            case CELL_REQ_CODE:
+                getSinglePositionCELL();break;
         }
     }
     public void getPositionGPS(long minTime, double minDistance){
@@ -179,9 +223,20 @@ public class MobileTracking extends CordovaPlugin {
           callbackContext.error("network is not available");
         }
     }
+    public void getSinglePositionCELL(){
+      CellLocationController cellLocationController = new CellLocationController();
+      //retrieve a reference to an instance of TelephonyManager
+      TelephonyManager telephonyManager = (TelephonyManager)cordova.getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+      cellLocationController.run(telephonyManager,context);
+    }
     public void getPositionCell(){
         Log.i(TAG, "cell");
-
+        if(cordova.hasPermission(NETWORK)){
+          Log.i(TAG, "has cell permission");
+          getSinglePositionCELL();
+        }else{
+            getNetworkPermission(CELL_REQ_CODE);
+        }
     }
 
     public void getPositionFromCriteria(JSONArray args){
@@ -203,7 +258,6 @@ public class MobileTracking extends CordovaPlugin {
 
                     //int power = jsonObject.getInt("power");
                     int power = jsonObject.optInt("power", -1);
-
 
                     switch(power){
                         case POWER_LOW: criteria.setPowerRequirement(POWER_LOW);break;
@@ -258,7 +312,7 @@ public class MobileTracking extends CordovaPlugin {
                     }
                     Log.i(TAG, "new "+location);
                     Log.i(TAG, "##"+counter+"##this...............location: "+bestGpsLocation);
-                    if(counter==2 || bestGpsLocation.getAccuracy()<=15){
+                    if(counter==2 || bestGpsLocation.getAccuracy()<=25){
                         sendLocation(this,bestGpsLocation);
                     }
 

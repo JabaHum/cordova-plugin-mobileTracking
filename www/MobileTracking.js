@@ -28,7 +28,7 @@ var MobileTracking = {
     getCurrentPosition: function(success, fail, args) {
 
         var param = {
-            provider: this.PROVIDER.NETWORK,
+            provider: this.PROVIDER.GPS,
             accuracy: this.ACCURACY.HIGH,
             power: this.POWER.HIGH,
             minTime:1000,

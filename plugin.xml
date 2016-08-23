@@ -13,17 +13,21 @@
 
     <!-- android -->
     <platform name="android">
-        <config-file target="AndroidManifest.xml" parent="/*">
-            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-            <uses-permission android:name="android.permission.INTERNET" />
-        </config-file>
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="MobileTracking">
                 <param name="android-package" value="MobileTracking"/>
             </feature>
         </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <service android:name=".Background" android:exported="false"></service>
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+            <uses-permission android:name="android.permission.INTERNET"/>
+        </config-file>
         <source-file src="src/android/MobileTracking.java" target-dir="src/"/>
+        <source-file src="src/android/Background.java" target-dir="src/"/>
+        <source-file src="src/android/CellLocationController.java" target-dir="src/"/>
     </platform>
 
 </plugin>
