@@ -1,3 +1,4 @@
+package de.appplant.cordova.plugin.background;
 
 import android.app.Activity;
 import android.Manifest;
@@ -35,6 +36,7 @@ public class MobileTracking extends CordovaPlugin {
     public static final int GPS_REQ_CODE = 0;
     public static final int NETWORK_REQ_CODE = 1;
     public static final int CELL_REQ_CODE = 2;
+    public static final int GPS_REQ_CODE_WATCH = 3;
 
     public static final int MOBILETRACKING_GPS = 1;
     public static final int MOBILETRACKING_NETWORK = 2;
@@ -63,8 +65,6 @@ public class MobileTracking extends CordovaPlugin {
     private double minDistance = 0;
     private long minTime = 0;
 
-
-
     /**
      * Constructor.
      */
@@ -75,8 +75,6 @@ public class MobileTracking extends CordovaPlugin {
         super.initialize(cordova, webView);
         this.cordova = cordova;
         context = this.cordova.getActivity().getApplicationContext();
-
-
     }
 
     @Override
@@ -95,7 +93,6 @@ public class MobileTracking extends CordovaPlugin {
               if(jsonObject.has("minTime")){
               minTime = jsonObject.getLong("minTime");
               }else minTime = 0;
-
                 switch(provider){
                     case MOBILETRACKING_GPS: getPositionGPS(minTime,minDistance); break;
                     case MOBILETRACKING_NETWORK: getPositionNetwork(minTime,minDistance); break;
@@ -112,33 +109,8 @@ public class MobileTracking extends CordovaPlugin {
             return true;
         }else if (action.equals("watchPosition")){
           Log.d(TAG, "We are entering watchPosition");
-          // create a package object for java.lang package
-             Package pack = Package.getPackage("java.lang");
 
-             // get the fully qualified name for this package
-            Log.d(TAG, "packageName:"+pack.getName());
-
-          int c = Background.ay7aja(2,3);
-          Log.d(TAG,""+c);
-          Activity activity = cordova.getActivity();
-          Intent intent = new Intent(
-                  activity, Background.class);
-
-          try {
-            //  activity.bindService(intent,
-              //        connection, Context.BIND_AUTO_CREATE);
-              //intent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
-              activity.startService(intent);
-          } catch (Exception e) {
-            Log.i(TAG,"error starting service");
-
-          }
-
-
-
-
-
-          cordova.getActivity().startService(intent);
+          return true;
         }
         return false;  // Returning false results in a "MethodNotFound" error.
     }
@@ -170,8 +142,53 @@ public class MobileTracking extends CordovaPlugin {
                 getSinglePositionNETWORK(minTime,minDistance);break;
             case CELL_REQ_CODE:
                 getSinglePositionCELL();break;
+            case GPS_REQ_CODE_WATCH:
+                watchPositionGPS();break;
         }
     }
+
+    public  void watchPosition(){
+
+      if(cordova.hasPermission(GPS)){
+        Log.i("debug","has permissions");
+
+        watchPositionGPS();
+      }else{
+          getGPSPermission(GPS_REQ_CODE_WATCH);
+      }
+
+
+  Log.i("debug","watchPosition");
+
+    }
+    public void watchPositionGPS(){
+      if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        Log.i("debug","watchPositionGPS");
+          // Define a listener that responds to location updates
+          LocationListener locationListener = new LocationListener() {
+              public void onLocationChanged(Location location) {
+
+                  Log.i(TAG, "new "+location);
+
+
+              }
+
+              public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+              public void onProviderEnabled(String provider) {}
+
+              public void onProviderDisabled(String provider) {}
+          };
+
+// Register the listener with the Location Manager to receive location updates
+          locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime,(float) minDistance, locationListener);
+      }
+      else{
+        Log.i(TAG,"gps  not available");
+        callbackContext.error("gps  not available");
+      }
+    }
+
     public void getPositionGPS(long minTime, double minDistance){
         if(cordova.hasPermission(GPS)){
             getSinglePositionGPS(minTime,minDistance);
@@ -187,26 +204,27 @@ public class MobileTracking extends CordovaPlugin {
         }
     }
     public void getSinglePositionNETWORK(long minTime, double minDistance){
+      counter = 0;
         if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             Log.i(TAG, "can use network");
             LocationListener locationListener = new LocationListener() {
                 public void onLocationChanged(Location location) {
-                    int i=0;
+
                     // Called when a new location is found by the network location provider.
                     if(bestNetworkLocation!=null){
                         double deltaAccuracy = bestNetworkLocation.getAccuracy()-location.getAccuracy();
                         if(deltaAccuracy>0){
-                            bestNetworkLocation = new Location(location);counter++;
+                            bestNetworkLocation = new Location(location);
                         }
                     }else{
-                        bestNetworkLocation = new Location(location);counter++;
+                        bestNetworkLocation = new Location(location);
                     }
                     Log.i(TAG, "new "+location);
                     Log.i(TAG, "##"+counter+"##this...............location: "+bestNetworkLocation);
-                    if(counter==2 || bestNetworkLocation.getAccuracy()<=15){
+                    if(counter == 1 || bestNetworkLocation.getAccuracy()<=15){
                         sendLocation(this,bestNetworkLocation);
                     }
-
+                    counter++;
                 }
 
                 public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -216,7 +234,6 @@ public class MobileTracking extends CordovaPlugin {
                 public void onProviderDisabled(String provider) {}
             };
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime, (float) minDistance, locationListener);
-
 
         }else{
           Log.i(TAG,"network is not available");
@@ -285,8 +302,6 @@ public class MobileTracking extends CordovaPlugin {
                 }else if (bestProvider.equals("gps")) {
                   getPositionNetwork(minTime,minDistance);
                 }
-
-
             } catch (JSONException e) {
                 // Do something with the exception
             }
@@ -301,6 +316,7 @@ public class MobileTracking extends CordovaPlugin {
             LocationListener locationListener = new LocationListener() {
                 public void onLocationChanged(Location location) {
                     int i=0;
+                    counter = 0;
                     // Called when a new location is found by the network location provider.
                     if(bestGpsLocation!=null){
                         double deltaAccuracy = bestGpsLocation.getAccuracy()-location.getAccuracy();
@@ -339,8 +355,10 @@ public class MobileTracking extends CordovaPlugin {
         locationManager.removeUpdates(locationListener);
         parsedLocation = ""+location.getLatitude()+" "+location.getLongitude();
         pluginResult = new PluginResult(PluginResult.Status.OK,parsedLocation);
-        pluginResult.setKeepCallback(false);
+        pluginResult.setKeepCallback(true);
         Log.i(TAG, "sending to successCallback..");
         callbackContext.sendPluginResult(pluginResult);
     }
+
+
 }

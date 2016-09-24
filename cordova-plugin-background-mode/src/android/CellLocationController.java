@@ -1,3 +1,5 @@
+package de.appplant.cordova.plugin.background;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -86,18 +88,18 @@ private XmlPullParserFactory xmlFactoryObject;
             ArrayList<Cell> cellsToPerformTriangulationOn;
             Collections.sort(test);
             if(test.size()>2){
-                cellsToPerformTriangulationOn=new ArrayList<>(3);
+                cellsToPerformTriangulationOn=new ArrayList<Cell>(3);
                 cellsToPerformTriangulationOn.add(test.get(0));
                 cellsToPerformTriangulationOn.add(test.get(1));
                 cellsToPerformTriangulationOn.add(test.get(2));
             }
             else if(test.size()==2){
-                cellsToPerformTriangulationOn=new ArrayList<>(2);
+                cellsToPerformTriangulationOn=new ArrayList<Cell>(2);
                 cellsToPerformTriangulationOn.add(test.get(0));
                 cellsToPerformTriangulationOn.add(test.get(1));
             }
             else {
-                cellsToPerformTriangulationOn=new ArrayList<>(1);
+                cellsToPerformTriangulationOn=new ArrayList<Cell>(1);
                 cellsToPerformTriangulationOn.add(test.get(0));
             }
 
@@ -199,7 +201,7 @@ private XmlPullParserFactory xmlFactoryObject;
     }
 
   public  ArrayList<Cell> chooseCells(TelephonyManager telephonyManager){
-        ArrayList<Cell> cells = new ArrayList<>(telephonyManager.getAllCellInfo().size());
+        ArrayList<Cell> cells = new ArrayList<Cell>(telephonyManager.getAllCellInfo().size());
         int i=0;
         try {
             for (CellInfo info : telephonyManager.getAllCellInfo()) {
